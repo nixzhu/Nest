@@ -35,7 +35,7 @@ private struct Glow: ViewModifier {
 }
 
 extension View where Self: Shape {
-    fileprivate func glow(
+    fileprivate func border(
         fill: some ShapeStyle,
         lineWidth: Double = 4,
         blurRadius: Double = 8,
@@ -215,12 +215,8 @@ private struct DemoView: View {
         GeometryReader { proxy in
             TimelineView(.periodic(from: .now, by: 0.1)) { timeline in
                 Capsule()
-                    .glow(fill: .palette)
-                    .glow(
-                        at: points[
-                            Int(timeline.date.timeIntervalSinceReferenceDate * 10) % points.count
-                        ]
-                    )
+                    .border(fill: .palette)
+                    .glow(at: point(for: timeline.date))
             }
             .onAppear {
                 points = proxy.frame(in: .local).roundedRectPoints(
@@ -229,6 +225,12 @@ private struct DemoView: View {
                 )
             }
         }
+    }
+
+    private func point(for date: Date) -> CGPoint {
+        points[
+            Int(date.timeIntervalSinceReferenceDate * 10) % points.count
+        ]
     }
 }
 
