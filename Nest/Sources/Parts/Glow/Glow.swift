@@ -1,56 +1,33 @@
 import SwiftUI
 import Combine
 
-// 参考 https://uvolchyk.medium.com/sparkling-shiny-things-with-metal-and-swiftui-cba69c730a24
+/// 参考 https://uvolchyk.medium.com/sparkling-shiny-things-with-metal-and-swiftui-cba69c730a24
 extension View {
-    func progressiveGlow(
-        points: [CGPoint],
-        timerTnterval: TimeInterval
+    func glow(
+        at point: CGPoint
     ) -> some View {
         modifier(
-            ProgressiveGlow(
-                points: points,
-                timerTnterval: timerTnterval
+            Glow(
+                point: point
             )
         )
     }
 }
 
-struct ProgressiveGlow: ViewModifier {
-    private let points: [CGPoint]
-    private let timer: Publishers.Autoconnect<Timer.TimerPublisher>
-    @State private var index = 0
-
-    init(
-        points: [CGPoint],
-        timerTnterval: TimeInterval
-    ) {
-        assert(!points.isEmpty)
-        assert(timerTnterval > 0)
-
-        self.points = points
-
-        timer = Timer.publish(
-            every: timerTnterval,
-            on: .main,
-            in: .common
-        ).autoconnect()
-    }
+private struct Glow: ViewModifier {
+    let point: CGPoint
 
     func body(content: Content) -> some View {
         if #available(iOS 17.0, *) {
             content.visualEffect { view, proxy in
                 view.colorEffect(
                     ShaderLibrary.default.glow(
-                        .float2(points[index % points.count]),
+                        .float2(point),
                         .float2(proxy.size)
                     )
                 )
             }
-            .animation(.linear, value: index)
-            .onReceive(timer) { _ in
-                index += 1
-            }
+            .animation(.linear, value: point)
         } else {
             content
         }
@@ -232,17 +209,25 @@ extension CGRect {
 }
 
 private struct DemoView: View {
+    @State private var points: [CGPoint] = [.zero]
+
     var body: some View {
         GeometryReader { proxy in
-            Capsule()
-                .glow(fill: .palette)
-                .progressiveGlow(
-                    points: proxy.frame(in: .local).roundedRectPoints(
-                        cornerRadius: proxy.size.height / 2,
-                        proposedNumberOfPoints: 30
-                    ),
-                    timerTnterval: 0.1
+            TimelineView(.periodic(from: .now, by: 0.1)) { timeline in
+                Capsule()
+                    .glow(fill: .palette)
+                    .glow(
+                        at: points[
+                            Int(timeline.date.timeIntervalSinceReferenceDate * 10) % points.count
+                        ]
+                    )
+            }
+            .onAppear {
+                points = proxy.frame(in: .local).roundedRectPoints(
+                    cornerRadius: proxy.size.height / 2,
+                    proposedNumberOfPoints: 30
                 )
+            }
         }
     }
 }
