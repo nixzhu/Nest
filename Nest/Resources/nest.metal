@@ -4,7 +4,7 @@
 using namespace metal;
 
 [[ stitchable ]]
-half4 glow(
+half4 shiny(
   float2 position,
   half4 color,
   float2 origin,

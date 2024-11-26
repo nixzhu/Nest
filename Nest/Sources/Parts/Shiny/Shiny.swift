@@ -1,27 +1,24 @@
 import SwiftUI
-import Combine
 
 /// 参考 https://uvolchyk.medium.com/sparkling-shiny-things-with-metal-and-swiftui-cba69c730a24
 extension View {
-    func glow(
+    func shiny(
         at point: CGPoint
     ) -> some View {
         modifier(
-            Glow(
-                point: point
-            )
+            Shiny(point: point)
         )
     }
 }
 
-private struct Glow: ViewModifier {
+private struct Shiny: ViewModifier {
     let point: CGPoint
 
     func body(content: Content) -> some View {
         if #available(iOS 17.0, *) {
             content.visualEffect { view, proxy in
                 view.colorEffect(
-                    ShaderLibrary.default.glow(
+                    ShaderLibrary.default.shiny(
                         .float2(point),
                         .float2(proxy.size)
                     )
@@ -35,7 +32,7 @@ private struct Glow: ViewModifier {
 }
 
 extension View where Self: Shape {
-    fileprivate func border(
+    fileprivate func glowBorder(
         fill: some ShapeStyle,
         lineWidth: Double = 4,
         blurRadius: Double = 8,
@@ -213,10 +210,10 @@ private struct DemoView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            TimelineView(.periodic(from: .now, by: 0.1)) { timeline in
+            TimelineView(.periodic(from: .now, by: 0.02)) { timeline in
                 Capsule()
-                    .border(fill: .palette)
-                    .glow(at: point(for: timeline.date))
+                    .glowBorder(fill: .palette)
+                    .shiny(at: point(for: timeline.date))
             }
             .onAppear {
                 points = proxy.frame(in: .local).roundedRectPoints(
@@ -228,9 +225,7 @@ private struct DemoView: View {
     }
 
     private func point(for date: Date) -> CGPoint {
-        points[
-            Int(date.timeIntervalSinceReferenceDate * 10) % points.count
-        ]
+        points[Int(date.timeIntervalSinceReferenceDate * 10) % points.count]
     }
 }
 
@@ -240,8 +235,8 @@ private struct DemoView: View {
 
         DemoView()
             .frame(
-                width: 240.0,
-                height: 100.0
+                width: 240,
+                height: 100
             )
     }
 }
